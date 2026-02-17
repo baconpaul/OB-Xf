@@ -221,6 +221,9 @@ void ObxfAudioProcessorEditor::resized()
     {
         static FocusOrder focusOrder;
 
+        if (saveDialog)
+            saveDialog->resetState();
+
         for (const auto *child : cachedThemeXml->getChildWithTagNameIterator("widget"))
         {
             juce::String name = child->getStringAttribute("name");
@@ -230,6 +233,11 @@ void ObxfAudioProcessorEditor::resized()
             const auto w = child->getIntAttribute("w");
             const auto h = child->getIntAttribute("h");
             const auto d = child->getIntAttribute("d");
+
+            if (name.startsWith("savePatch") && saveDialog)
+            {
+                saveDialog->boundsMap[name.toStdString()] = juce::Rectangle<int>(x, y, w, h);
+            }
 
             if (componentMap[name] != nullptr)
             {
@@ -316,6 +324,9 @@ void ObxfAudioProcessorEditor::resized()
                 OBLOG(themes, "Null component map for " << name);
             }
         }
+
+        if (saveDialog)
+            saveDialog->resized();
     }
 
     const float sf = impliedScaleFactor();

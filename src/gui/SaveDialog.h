@@ -24,6 +24,8 @@
 #define OB_XF_SRC_GUI_SAVEDIALOG_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <unordered_map>
+#include <string>
 
 #include "gui/ButtonList.h"
 #include "gui/Display.h"
@@ -36,12 +38,16 @@ struct SaveDialog : juce::Component
     static constexpr int noCatID{1000};
     ObxfAudioProcessorEditor &editor;
     std::unique_ptr<juce::Drawable> saveDialogSVG;
+    bool hasSkinImage{false};
+    std::unordered_map<std::string, juce::Rectangle<int>> boundsMap;
 
     SaveDialog(ObxfAudioProcessorEditor &editor) : editor(editor)
     {
         auto getScaleFactor = [&editor]() { return editor.impliedScaleFactor(); };
 
         saveDialogSVG = editor.imageCache.getEmbeddedVectorDrawable("label-bg-save-patch");
+
+        resetState();
 
         ok = std::make_unique<ToggleButton>("button-clear-red", 35, editor.imageCache,
                                             &editor.processor, true);
@@ -77,6 +83,16 @@ struct SaveDialog : juce::Component
 
         project = std::make_unique<Display>("Project", getScaleFactor);
         addAndMakeVisible(*project);
+    }
+
+    void resetState()
+    {
+        hasSkinImage = false;
+        if (editor.imageCache.hasImageFor("label-bg-save-patch"))
+        {
+            hasSkinImage = true;
+        }
+        boundsMap.clear();
     }
 
     void doQuickSave()
@@ -155,20 +171,29 @@ struct SaveDialog : juce::Component
         auto bx = getContentArea();
 
         // clang-format off
-        float nameBounds   [4] {  22,  29, 200, 31 };
-        float authorBounds [4] {  22,  90, 200, 31 };
-        float projectBounds[4] {  22, 151, 200, 31 };
-        float catBounds    [4] {  25, 212,  90, 31 };
-        float licBounds    [4] { 126, 212,  96, 31 };
-        float cancelBounds [4] { 129, 272,  23, 35 };
-        float okBounds     [4] {  92, 272,  23, 35 };
-
-        auto toR = [&bx, sc](auto *v)
+        auto lookup = [this](const std::string &key, int dx, int dy, int dw, int dh)
+            -> juce::Rectangle<int>
         {
-            return juce::Rectangle<int>(v[0] * sc + bx.getX(),
-                                        v[1] * sc + bx.getY(),
-                                        v[2] * sc,
-                                        v[3] * sc);
+            auto it = boundsMap.find(key);
+            if (it != boundsMap.end())
+                return it->second;
+            return {dx, dy, dw, dh};
+        };
+
+        auto nameBounds    = lookup("savePatchNameLabel",      22,  29, 200, 31);
+        auto authorBounds  = lookup("savePatchAuthorLabel",    22,  90, 200, 31);
+        auto projectBounds = lookup("savePatchProjectLabel",   22, 151, 200, 31);
+        auto catBounds     = lookup("savePatchCategoryMenu",   25, 212,  90, 31);
+        auto licBounds     = lookup("savePatchLicenseLabel",  126, 212,  96, 31);
+        auto cancelBounds  = lookup("savePatchCancelButton",  129, 272,  23, 35);
+        auto okBounds      = lookup("savePatchOKButton",       92, 272,  23, 35);
+
+        auto toR = [&bx, sc](const juce::Rectangle<int> &r)
+        {
+            return juce::Rectangle<int>(r.getX() * sc + bx.getX(),
+                                        r.getY() * sc + bx.getY(),
+                                        r.getWidth() * sc,
+                                        r.getHeight() * sc);
         };
         // clang-format on
 
@@ -187,18 +212,34 @@ struct SaveDialog : juce::Component
 
         g.fillAll(juce::Colours::black.withAlpha(0.85f));
 
-        if (saveDialogSVG)
+        auto r = getContentArea();
+
+        if (hasSkinImage)
         {
-            auto r = getContentArea();
+            if (editor.imageCache.isSVG("label-bg-save-patch"))
+            {
+                auto &svg = editor.imageCache.getSVGDrawable("label-bg-save-patch", 0);
+                auto at = juce::AffineTransform().scaled(sc).translated(r.getX(), r.getY());
+                svg->draw(g, 1.0, at);
+            }
+            else
+            {
+                auto img = editor.imageCache.getImageFor("label-bg-save-patch", r.getWidth(),
+                                                         r.getHeight());
+                g.drawImage(img, r.toFloat());
+            }
+        }
+        else if (saveDialogSVG)
+        {
             auto at = juce::AffineTransform().scaled(sc).translated(r.getX(), r.getY());
             saveDialogSVG->draw(g, 1.0, at);
         }
         else
         {
             g.setColour(juce::Colour(0xAA, 0xAA, 0xAA));
-            g.fillRect(getContentArea());
+            g.fillRect(r);
             g.setColour(juce::Colours::white);
-            g.drawRect(getContentArea(), 3);
+            g.drawRect(r, 3);
         }
     }
 
@@ -206,20 +247,21 @@ struct SaveDialog : juce::Component
     {
         auto sc = editor.impliedScaleFactor();
 
-        if (!saveDialogSVG)
+        auto it = boundsMap.find("savePatchDialog");
+        int dw = 246, dh = 328;
+        if (it != boundsMap.end())
         {
-            auto bx = juce::Rectangle<int>(0, 0, 246 * sc, 328 * sc)
-                          .withCentre(getLocalBounds().getCentre());
-            return bx;
+            dw = it->second.getWidth();
+            dh = it->second.getHeight();
         }
-        else
+        else if (saveDialogSVG)
         {
-            auto w = saveDialogSVG->getWidth();
-            auto h = saveDialogSVG->getHeight();
+            dw = saveDialogSVG->getWidth();
+            dh = saveDialogSVG->getHeight();
+        }
 
-            return juce::Rectangle<int>(0, 0, w * sc, h * sc)
-                .withCentre(getLocalBounds().getCentre());
-        }
+        return juce::Rectangle<int>(0, 0, dw * sc, dh * sc)
+            .withCentre(getLocalBounds().getCentre());
     }
 
     void getPatchInfo()
