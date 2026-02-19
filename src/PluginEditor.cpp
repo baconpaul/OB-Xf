@@ -3295,7 +3295,10 @@ void ObxfAudioProcessorEditor::loadPatchFromProgrammer(int whichButton)
     {
         newIdx *= gsb ? NUM_PATCHES_PER_GROUP : 1;
 
-        utils.loadPatch(utils.patchesAsLinearList[newIdx]);
+        if (newIdx >= 0 && newIdx < utils.patchesAsLinearList.size())
+        {
+            utils.loadPatch(utils.patchesAsLinearList[newIdx]);
+        }
 
         return;
     }
