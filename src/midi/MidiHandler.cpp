@@ -130,7 +130,15 @@ void MidiHandler::processMidiPerSample(juce::MidiBufferIterator *iter,
         }
         if (midiMsg->isPitchWheel())
         {
-            synth.processPitchWheel((midiMsg->getPitchWheelValue() - 8192) / 8192.0f);
+            const float pitchVal = (midiMsg->getPitchWheelValue() - 8192) / 8192.0f;
+            if (mpeEnabled.load() && midiMsg->getChannel() != 1)
+            {
+                synth.processMPEPitch(static_cast<int8_t>(midiMsg->getChannel() - 1), pitchVal);
+            }
+            else
+            {
+                synth.processPitchWheel(pitchVal);
+            }
         }
         if (midiMsg->isController())
         {

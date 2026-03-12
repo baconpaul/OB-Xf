@@ -458,6 +458,7 @@ void ObxfAudioProcessor::setMpeEnabled(bool enabled)
 void ObxfAudioProcessor::setMpePitchBendRange(int range)
 {
     midiHandler.mpePitchBendRange.store(range);
+    synth.getMotherboard()->mpePitchBendRange = range;
 }
 
 //==============================================================================

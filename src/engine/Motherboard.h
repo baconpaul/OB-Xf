@@ -71,6 +71,7 @@ class Motherboard
     bool unison{false};
     bool oversample{false};
     bool mpeEnabled{false};
+    int mpePitchBendRange{48};
 
     std::array<int32_t, 128> debugNoteOn{}, debugNoteOff{};
 
@@ -567,6 +568,20 @@ class Motherboard
         }
 
         dumpVoiceStatus("Note Off (2)");
+    }
+
+    void processMPEPitch(int8_t channel, float pitchBendValue)
+    {
+        // pitchBendValue is -1..1 representing mpePitchBendRange. Scale to semitones with the range
+        const float scaled = pitchBendValue * mpePitchBendRange;
+        for (int i = 0; i < totalVoiceCount; i++)
+        {
+            // isGated not isSounding since long release can reuse channels
+            if (voices[i].channel == channel && voices[i].isGated())
+            {
+                voices[i].mpeBend = scaled;
+            }
+        }
     }
 
     void SetHQMode(bool over, bool force = false)

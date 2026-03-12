@@ -148,6 +148,7 @@ class Voice
     int midiNote{60};
     int16_t channel{0};
     float pitchBend{0.f};
+    float mpeBend{0.f};
     bool sustainHold{false};
 
     float lfo1In{0.f};
@@ -184,7 +185,7 @@ class Voice
 
         // rescale pitch bend
         float pitchBendScaled =
-            (pitchBend < 0.f) ? (pitchBend * par.extmod.pbDown) : (pitchBend * par.extmod.pbUp);
+            (pitchBend < 0.f) ? (pitchBend * par.extmod.pbDown) : (pitchBend * par.extmod.pbUp) + mpeBend;
 
         oscs.par.pitch.notePlaying = portaProcessed;
 

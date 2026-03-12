@@ -157,6 +157,8 @@ class SynthEngine
 
     void processPitchWheel(float val) { pitchBendSmoother.setStep(val); }
 
+    void processMPEPitch(int8_t channel, float val) { synth.processMPEPitch(channel, val); }
+
     void processModWheel(float val) { modWheelSmoother.setStep(val); }
 
     void processModWheelSmoothed(float val) { synth.vibratoAmount = val; }

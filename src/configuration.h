@@ -33,6 +33,7 @@ static constexpr bool params{false};
 static constexpr bool paramSet{false};
 static constexpr bool midiLearn{false};
 static constexpr bool voiceManager{false};
+static constexpr bool mpe{true};
 } // namespace obxf_log
 
 // TODO - grab more fulsome version from ShortCircuit
