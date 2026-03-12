@@ -110,3 +110,5 @@ Testing/
 installer-tmp/
 
 BUILD_VERSION
+
+.junie/

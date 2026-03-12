@@ -209,6 +209,10 @@ void StateManager::collectDAWExtraStateFromInstance()
     dawExtraState.controllers = mmap.controllers;
     dawExtraState.selectedLFOIndex = audioProcessor->selectedLFOIndex;
     dawExtraState.impliedScaleFactor = audioProcessor->lastImpliedScaleFactor;
+
+    auto &mh = audioProcessor->getMidiHandler();
+    dawExtraState.mpeEnabled = mh.mpeEnabled.load();
+    dawExtraState.mpePitchBendRange = mh.mpePitchBendRange.load();
 }
 
 void StateManager::applyDAWExtraStateToInstance()
@@ -222,6 +226,10 @@ void StateManager::applyDAWExtraStateToInstance()
 
     audioProcessor->selectedLFOIndex = dawExtraState.selectedLFOIndex;
     audioProcessor->lastImpliedScaleFactor = dawExtraState.impliedScaleFactor;
+
+    auto &mh = audioProcessor->getMidiHandler();
+    mh.mpeEnabled.store(dawExtraState.mpeEnabled);
+    mh.mpePitchBendRange.store(dawExtraState.mpePitchBendRange);
 }
 
 void StateManager::DAWExtraState::fromElement(const juce::XmlElement *e)
@@ -240,6 +248,9 @@ void StateManager::DAWExtraState::fromElement(const juce::XmlElement *e)
 
     selectedLFOIndex = e->getIntAttribute("selectedLFOIndex", 0);
     impliedScaleFactor = e->getDoubleAttribute("impliedScaleFactor", 1.0);
+
+    mpeEnabled = e->getBoolAttribute("mpeEnabled", false);
+    mpePitchBendRange = e->getIntAttribute("mpePitchBendRange", 48);
 }
 
 std::unique_ptr<juce::XmlElement> StateManager::DAWExtraState::toElement() const
@@ -258,5 +269,9 @@ std::unique_ptr<juce::XmlElement> StateManager::DAWExtraState::toElement() const
 
     res->setAttribute("selectedLFOIndex", selectedLFOIndex);
     res->setAttribute("impliedScaleFactor", impliedScaleFactor);
+
+    res->setAttribute("mpeEnabled", mpeEnabled);
+    res->setAttribute("mpePitchBendRange", mpePitchBendRange);
+
     return res;
 }

@@ -2599,6 +2599,36 @@ void ObxfAudioProcessorEditor::createMenu()
     menu->addSubMenu(toOSCase("MIDI Mapping"), midiMenu);
 
     {
+        juce::PopupMenu mpeMenu;
+        auto &midiHandler = processor.getMidiHandler();
+
+        bool mpeOn = midiHandler.mpeEnabled.load();
+        mpeMenu.addItem(toOSCase("MPE Enabled"), true, mpeOn,
+                        [w = juce::Component::SafePointer(this)]() {
+                            if (!w)
+                                return;
+                            auto &mh = w->processor.getMidiHandler();
+                            mh.mpeEnabled.store(!mh.mpeEnabled.load());
+                        });
+
+        mpeMenu.addSeparator();
+        mpeMenu.addSectionHeader(toOSCase("Pitch Bend Range"));
+
+        int curPBR = midiHandler.mpePitchBendRange.load();
+        for (int pbr : {2, 12, 24, 48, 96})
+        {
+            mpeMenu.addItem(fmt::format("{} semitones", pbr), true, curPBR == pbr,
+                            [w = juce::Component::SafePointer(this), pbr]() {
+                                if (!w)
+                                    return;
+                                w->processor.getMidiHandler().mpePitchBendRange.store(pbr);
+                            });
+        }
+
+        menu->addSubMenu(toOSCase("MPE"), mpeMenu);
+    }
+
+    {
         juce::PopupMenu themeMenu;
         auto ll = Utils::LocationType::SYSTEM_FACTORY;
 
