@@ -206,6 +206,7 @@ class ObxfAudioProcessor final : public juce::AudioProcessor,
 
     void setMpeEnabled(bool enabled);
     void setMpePitchBendRange(int range);
+    void updateMatrix();
 
     std::unique_ptr<Utils> utils;
 

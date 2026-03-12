@@ -2624,6 +2624,25 @@ void ObxfAudioProcessorEditor::createMenu()
                             });
         }
 
+        juce::PopupMenu mpePresetMenu;
+        auto presets = getMatrixPresets();
+        for (int i = 0; i < (int)presets.size(); ++i)
+        {
+            mpePresetMenu.addItem(
+                presets[i].name, [w = juce::Component::SafePointer(this), i]() {
+                    if (!w)
+                        return;
+                    auto ps = getMatrixPresets();
+                    auto &mb = *w->processor.getSynth().getMotherboard();
+                    mb.voiceMatrix.clear();
+                    for (int r = 0; r < numMatrixRows; ++r)
+                        mb.voiceMatrix.rows[r] = ps[i].rows[r];
+                    w->processor.updateMatrix();
+                });
+        }
+        mpeMenu.addSeparator();
+        mpeMenu.addSubMenu(toOSCase("PRESET (tmp)"), mpePresetMenu);
+
         menu->addSubMenu(toOSCase("MPE"), mpeMenu);
     }
 

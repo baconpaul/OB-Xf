@@ -461,6 +461,11 @@ void ObxfAudioProcessor::setMpePitchBendRange(int range)
     synth.getMotherboard()->mpePitchBendRange = range;
 }
 
+void ObxfAudioProcessor::updateMatrix()
+{
+    // TODO: notify voices / trigger per-voice recalculation when matrix changes
+}
+
 //==============================================================================
 
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() { return new ObxfAudioProcessor(); }
