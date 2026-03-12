@@ -146,6 +146,7 @@ class Voice
     } par;
 
     int midiNote{60};
+    int16_t channel{0};
     float pitchBend{0.f};
     bool sustainHold{false};
 
@@ -346,7 +347,7 @@ class Voice
 
     static constexpr float reuseVelocitySentinel{-0.5f};
 
-    void NoteOn(int note, float vel)
+    void NoteOn(int note, float vel, int16_t chan)
     {
         OBLOG(voiceManager, "idx=" << voiceIndex << ": Note On " << note << " sound=" << sounding
                                    << " sustainHold=" << sustainHold << " gated=" << gated
@@ -369,6 +370,7 @@ class Voice
         }
 
         midiNote = note;
+        channel = chan;
 
         if (!gatedWithSustain || (par.extmod.envLegatoMode & 1))
         {

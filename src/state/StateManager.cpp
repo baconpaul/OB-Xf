@@ -227,9 +227,8 @@ void StateManager::applyDAWExtraStateToInstance()
     audioProcessor->selectedLFOIndex = dawExtraState.selectedLFOIndex;
     audioProcessor->lastImpliedScaleFactor = dawExtraState.impliedScaleFactor;
 
-    auto &mh = audioProcessor->getMidiHandler();
-    mh.mpeEnabled.store(dawExtraState.mpeEnabled);
-    mh.mpePitchBendRange.store(dawExtraState.mpePitchBendRange);
+    audioProcessor->setMpeEnabled(dawExtraState.mpeEnabled);
+    audioProcessor->setMpePitchBendRange(dawExtraState.mpePitchBendRange);
 }
 
 void StateManager::DAWExtraState::fromElement(const juce::XmlElement *e)

@@ -449,6 +449,17 @@ void ObxfAudioProcessor::updateUIState()
     }
 }
 
+void ObxfAudioProcessor::setMpeEnabled(bool enabled)
+{
+    midiHandler.mpeEnabled.store(enabled);
+    synth.getMotherboard()->mpeEnabled = enabled;
+}
+
+void ObxfAudioProcessor::setMpePitchBendRange(int range)
+{
+    midiHandler.mpePitchBendRange.store(range);
+}
+
 //==============================================================================
 
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() { return new ObxfAudioProcessor(); }

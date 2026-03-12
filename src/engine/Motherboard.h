@@ -70,6 +70,7 @@ class Motherboard
     float pannings[MAX_PANNINGS];
     bool unison{false};
     bool oversample{false};
+    bool mpeEnabled{false};
 
     std::array<int32_t, 128> debugNoteOn{}, debugNoteOff{};
 
@@ -422,7 +423,7 @@ class Motherboard
         return false;
     }
 
-    void setNoteOn(int note, float velocity, int8_t /* channel */)
+    void setNoteOn(int note, float velocity, int8_t channel)
     {
         debugNoteOn[note]++;
         // This played note has the highest as-played priority
@@ -449,7 +450,7 @@ class Motherboard
             Voice *v = voiceQueue.getNext();
             if (v->midiNote == note && v->isGated() && voicesNeeded > 0)
             {
-                v->NoteOn(note, velocity);
+                v->NoteOn(note, velocity, channel);
                 voicesNeeded--;
             }
         }
@@ -466,7 +467,7 @@ class Motherboard
                 auto v = nextVoiceToBeStolen();
 
                 stolenVoicesOnMIDIKey[v->midiNote]++;
-                v->NoteOn(note, velocity);
+                v->NoteOn(note, velocity, channel);
                 voicesNeeded--;
 
                 break;
@@ -489,7 +490,7 @@ class Motherboard
 
                 if (!v->isGated())
                 {
-                    v->NoteOn(note, velocity);
+                    v->NoteOn(note, velocity, channel);
                     voicesNeeded--;
 
                     if (voicesNeeded == 0)
@@ -503,7 +504,7 @@ class Motherboard
         dumpVoiceStatus("NoteOn");
     }
 
-    void setNoteOff(int note, float /* velocity */, int8_t /* channel */)
+    void setNoteOff(int note, float /* velocity */, int8_t channel)
     {
 
         debugNoteOff[note]++;
@@ -519,7 +520,7 @@ class Motherboard
             {
                 Voice *v = voiceQueue.getNext();
 
-                if (v->midiNote == note)
+                if (v->midiNote == note && (!mpeEnabled || v->channel == channel))
                 {
                     v->NoteOff();
                 }
@@ -538,7 +539,7 @@ class Motherboard
 
                 if (p->midiNote == note && p->isGated())
                 {
-                    p->NoteOn(mk, Voice::reuseVelocitySentinel);
+                    p->NoteOn(mk, Voice::reuseVelocitySentinel, p->channel);
                     stolenVoicesOnMIDIKey[mk]--;
 
                     break;

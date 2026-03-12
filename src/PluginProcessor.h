@@ -202,6 +202,9 @@ class ObxfAudioProcessor final : public juce::AudioProcessor,
 
     MidiHandler &getMidiHandler() { return midiHandler; }
 
+    void setMpeEnabled(bool enabled);
+    void setMpePitchBendRange(int range);
+
     std::unique_ptr<Utils> utils;
 
     const Program &getActiveProgram() const { return activeProgram; }

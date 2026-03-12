@@ -2604,11 +2604,10 @@ void ObxfAudioProcessorEditor::createMenu()
 
         bool mpeOn = midiHandler.mpeEnabled.load();
         mpeMenu.addItem(toOSCase("MPE Enabled"), true, mpeOn,
-                        [w = juce::Component::SafePointer(this)]() {
+                        [w = juce::Component::SafePointer(this), mpeOn]() {
                             if (!w)
                                 return;
-                            auto &mh = w->processor.getMidiHandler();
-                            mh.mpeEnabled.store(!mh.mpeEnabled.load());
+                            w->processor.setMpeEnabled(!mpeOn);
                         });
 
         mpeMenu.addSeparator();
@@ -2621,7 +2620,7 @@ void ObxfAudioProcessorEditor::createMenu()
                             [w = juce::Component::SafePointer(this), pbr]() {
                                 if (!w)
                                     return;
-                                w->processor.getMidiHandler().mpePitchBendRange.store(pbr);
+                                w->processor.setMpePitchBendRange(pbr);
                             });
         }
 
