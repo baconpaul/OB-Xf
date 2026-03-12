@@ -29,6 +29,7 @@
 #include "Filter.h"
 #include "Decimator.h"
 #include "Tuning.h"
+#include "VoiceMatrix.h"
 
 class Voice
 {
@@ -147,6 +148,7 @@ class Voice
 
     int midiNote{60};
     int16_t channel{0};
+    VoiceMatrixAdjustments matrixAdjustments{};
     float pitchBend{0.f};
     float mpeBend{0.f};
     bool sustainHold{false};
@@ -372,6 +374,7 @@ class Voice
 
         midiNote = note;
         channel = chan;
+        matrixAdjustments.clear();
 
         if (!gatedWithSustain || (par.extmod.envLegatoMode & 1))
         {

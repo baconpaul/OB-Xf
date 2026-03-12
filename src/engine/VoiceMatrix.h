@@ -86,8 +86,44 @@ inline MatrixSource matrixSourceFromString(const std::string &s)
     return MatrixSource::None;
 }
 
+/*
+ * VoiceMatrixAdjustments: per-voice modulation accumulator.
+ * Contains one float per valid matrix target — keep this in sync with
+ * isValidMatrixTarget() below.
+ */
+struct VoiceMatrixAdjustments
+{
+    // Keep in sync with isValidMatrixTarget()
+    float filterCutoff{0.f};
+    float filterResonance{0.f};
+    float osc1Pitch{0.f};
+    float osc2Pitch{0.f};
+    float osc2Detune{0.f};
+    float osc2PWOffset{0.f};
+    float osc1Vol{0.f};
+    float osc2Vol{0.f};
+    float noiseVol{0.f};
+    float ringModVol{0.f};
+    float noiseColor{0.f};
+
+    void clear()
+    {
+        filterCutoff = 0.f;
+        filterResonance = 0.f;
+        osc1Pitch = 0.f;
+        osc2Pitch = 0.f;
+        osc2Detune = 0.f;
+        osc2PWOffset = 0.f;
+        osc1Vol = 0.f;
+        osc2Vol = 0.f;
+        noiseVol = 0.f;
+        ringModVol = 0.f;
+        noiseColor = 0.f;
+    }
+};
+
 // ---------------------------------------------------------------------------
-// Valid modulation targets
+// Valid modulation targets — keep in sync with VoiceMatrixAdjustments above
 // ---------------------------------------------------------------------------
 inline bool isValidMatrixTarget(const std::string &tgt)
 {
