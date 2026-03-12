@@ -202,6 +202,8 @@ class ObxfAudioProcessor final : public juce::AudioProcessor,
 
     MidiHandler &getMidiHandler() { return midiHandler; }
 
+    SynthEngine &getSynth() { return synth; }
+
     void setMpeEnabled(bool enabled);
     void setMpePitchBendRange(int range);
 

@@ -29,6 +29,7 @@
 #include "SynthEngine.h"
 #include "Lfo.h"
 #include "Tuning.h"
+#include "VoiceMatrix.h"
 
 static constexpr bool ECO_MODE = true;
 
@@ -72,6 +73,8 @@ class Motherboard
     bool oversample{false};
     bool mpeEnabled{false};
     int mpePitchBendRange{48};
+
+    VoiceMatrix voiceMatrix;
 
     std::array<int32_t, 128> debugNoteOn{}, debugNoteOff{};
 

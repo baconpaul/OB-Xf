@@ -75,6 +75,9 @@ void StateManager::getActiveProgramStateOnto(juce::XmlElement &xmlState) const
 
     xmlState.setAttribute(S("voiceCount"), MAX_VOICES);
     xmlState.setAttribute(S("programName"), prog.getName());
+
+    auto vmEl = audioProcessor->getSynth().getMotherboard()->voiceMatrix.toElement();
+    xmlState.addChildElement(vmEl.release());
     xmlState.setAttribute(S("author"), prog.getAuthor());
     xmlState.setAttribute(S("license"), prog.getLicense());
     xmlState.setAttribute(S("category"), prog.getCategory());
@@ -167,6 +170,9 @@ void StateManager::setActiveProgramStateFrom(const juce::XmlElement &pnode, uint
     program.setLicense(pnode.getStringAttribute(S("license"), S("")));
     program.setCategory(pnode.getStringAttribute(S("category"), S("")));
     program.setProject(pnode.getStringAttribute(S("project"), S("")));
+
+    audioProcessor->getSynth().getMotherboard()->voiceMatrix.fromElement(
+        pnode.getChildByName("VoiceMatrix"));
 }
 
 bool StateManager::loadFromMemoryBlock(juce::MemoryBlock &mb)
