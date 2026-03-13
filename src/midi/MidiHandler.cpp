@@ -110,7 +110,7 @@ void MidiHandler::processMidiPerSample(juce::MidiBufferIterator *iter,
             continue;
 
         const auto status = data[0] & 0xF0;
-        if (status != 0x80 && status != 0x90 && status != 0xB0 && status != 0xC0 && status != 0xE0)
+        if (status != 0x80 && status != 0x90 && status != 0xB0 && status != 0xC0 && status != 0xD0 && status != 0xE0)
             continue;
 
         // DBG("Valid Message: " << (int)midiMsg->getChannel() << " "

@@ -27,6 +27,7 @@
 #include "components/ScalingImageCache.h"
 
 #include "gui/AboutScreen.h"
+#include "gui/MPEMatrix.h"
 #include "gui/SaveDialog.h"
 #include "gui/FocusDebugger.h"
 #include "gui/FocusOrder.h"
@@ -88,6 +89,9 @@ ObxfAudioProcessorEditor::ObxfAudioProcessorEditor(ObxfAudioProcessor &p)
 
     saveDialog = std::make_unique<SaveDialog>(*this);
     addChildComponent(*saveDialog);
+
+    mpeMatrixEditor = std::make_unique<MPEMatrixEditor>(processor);
+    addChildComponent(*mpeMatrixEditor);
 
     const auto jersey = juce::Typeface::createSystemTypefaceFor(BinaryData::Jersey20_ttf,
                                                                 BinaryData::Jersey20_ttfSize);
@@ -323,6 +327,13 @@ void ObxfAudioProcessorEditor::resized()
 
     if (saveDialog)
         saveDialog->setBounds(getBounds());
+
+    if (mpeMatrixEditor)
+    {
+        const int w = MPEMatrixEditor::preferredWidth();
+        const int h = MPEMatrixEditor::preferredHeight();
+        mpeMatrixEditor->setBounds((getWidth() - w) / 2, (getHeight() - h) / 2, w, h);
+    }
 
     if (updateProcessorImpliedScaleFactor)
     {
@@ -2487,6 +2498,10 @@ void ObxfAudioProcessorEditor::clean()
     {
         addChildComponent(*saveDialog);
     }
+    if (mpeMatrixEditor)
+    {
+        addChildComponent(*mpeMatrixEditor);
+    }
 }
 
 void ObxfAudioProcessorEditor::rebuildComponents(ObxfAudioProcessor &ownerFilter)
@@ -2624,6 +2639,16 @@ void ObxfAudioProcessorEditor::createMenu()
                             });
         }
 
+        mpeMenu.addSeparator();
+        mpeMenu.addItem(toOSCase("Edit MPE Matrix..."),
+                        [w = juce::Component::SafePointer(this)]() {
+                            if (!w || !w->mpeMatrixEditor)
+                                return;
+                            w->mpeMatrixEditor->refresh();
+                            w->mpeMatrixEditor->setVisible(true);
+                            w->mpeMatrixEditor->toFront(true);
+                        });
+
         juce::PopupMenu mpePresetMenu;
         auto presets = getMatrixPresets();
         for (int i = 0; i < (int)presets.size(); ++i)
@@ -2635,9 +2660,10 @@ void ObxfAudioProcessorEditor::createMenu()
                     auto ps = getMatrixPresets();
                     for (int r = 0; r < numMatrixRows; ++r)
                         w->processor.pushMatrixRowUpdate(r, ps[i].rows[r]);
+                    if (w->mpeMatrixEditor && w->mpeMatrixEditor->isVisible())
+                        w->mpeMatrixEditor->syncUI(ps[i].rows);
                 });
         }
-        mpeMenu.addSeparator();
         mpeMenu.addSubMenu(toOSCase("PRESET (tmp)"), mpePresetMenu);
 
         menu->addSubMenu(toOSCase("MPE"), mpeMenu);
