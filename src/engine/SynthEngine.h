@@ -112,7 +112,7 @@ class SynthEngine
             if (v.isSounding())
             {
                 v.par.filter.cutoff = co;
-                v.filter.setResonance(re);
+                v.filter.setResonance(juce::jlimit(0.f, 0.991f, re + v.matrixAdjustments.filterResonance * VoiceMatrixRanges::filterResonance));
                 v.filter.setMultimode(fm);
                 v.pitchBend = pb;
             }
@@ -158,6 +158,7 @@ class SynthEngine
     void processPitchWheel(float val) { pitchBendSmoother.setStep(val); }
 
     void processMPEPitch(int8_t channel, float val) { synth.processMPEPitch(channel, val); }
+    void processMPETimbre(int8_t channel, float val) { synth.processMPETimbre(channel, val); }
 
     void processModWheel(float val) { modWheelSmoother.setStep(val); }
 

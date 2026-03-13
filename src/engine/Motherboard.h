@@ -587,6 +587,21 @@ class Motherboard
         }
     }
 
+    void processMPETimbre(int8_t channel, float timbreValue)
+    {
+        // timbreValue is 0..1 (CC74 / 127), normalised to -1..1 for the matrix
+        const float normalised = timbreValue * 2.f - 1.f;
+        for (int i = 0; i < totalVoiceCount; i++)
+        {
+            if (voices[i].channel == channel && voices[i].isGated())
+            {
+                setMatrixSource(voices[i].matrixSourceValues, MatrixSource::Timbre, normalised);
+                recalculateMatrix(voiceMatrix, voices[i].matrixSourceValues,
+                                  voices[i].matrixAdjustments);
+            }
+        }
+    }
+
     void SetHQMode(bool over, bool force = false)
     {
         if (!force && over == oversample)

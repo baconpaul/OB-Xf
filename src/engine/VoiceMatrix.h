@@ -253,6 +253,121 @@ struct VoiceMatrix
     }
 };
 
+/*
+ * VoiceMatrixSourceValues: stores the last received value for each matrix source,
+ * normalised to -1..1. Lives on each Voice so recalculateMatrix can recompute
+ * adjustments from scratch without accumulation.
+ */
+struct VoiceMatrixSourceValues
+{
+    float voiceBend{0.f};
+    float channelPressure{0.f};
+    float timbre{0.f};
+    float velocity{0.f};
+    float releaseVelocity{0.f};
+
+    void clear()
+    {
+        voiceBend = 0.f;
+        channelPressure = 0.f;
+        timbre = 0.f;
+        velocity = 0.f;
+        releaseVelocity = 0.f;
+    }
+
+    float get(MatrixSource src) const
+    {
+        switch (src)
+        {
+        case MatrixSource::VoiceBend:
+            return voiceBend;
+        case MatrixSource::ChannelPressure:
+            return channelPressure;
+        case MatrixSource::Timbre:
+            return timbre;
+        case MatrixSource::Velocity:
+            return velocity;
+        case MatrixSource::ReleaseVelocity:
+            return releaseVelocity;
+        default:
+            return 0.f;
+        }
+    }
+
+    void set(MatrixSource src, float value)
+    {
+        switch (src)
+        {
+        case MatrixSource::VoiceBend:
+            voiceBend = value;
+            break;
+        case MatrixSource::ChannelPressure:
+            channelPressure = value;
+            break;
+        case MatrixSource::Timbre:
+            timbre = value;
+            break;
+        case MatrixSource::Velocity:
+            velocity = value;
+            break;
+        case MatrixSource::ReleaseVelocity:
+            releaseVelocity = value;
+            break;
+        default:
+            break;
+        }
+    }
+};
+
+// ---------------------------------------------------------------------------
+// setMatrixTarget: store a source value on a voice, then call recalculateMatrix.
+// value should be normalised to -1..1 before calling.
+// ---------------------------------------------------------------------------
+inline void setMatrixSource(VoiceMatrixSourceValues &srcVals, MatrixSource src, float value)
+{
+    srcVals.set(src, value);
+}
+
+// ---------------------------------------------------------------------------
+// recalculateMatrix: zero adjustments and recompute from stored source values.
+// Call after any source value changes to avoid accumulation.
+// ---------------------------------------------------------------------------
+inline void recalculateMatrix(const VoiceMatrix &matrix, const VoiceMatrixSourceValues &srcVals,
+                              VoiceMatrixAdjustments &adj)
+{
+    adj.clear();
+    for (const auto &row : matrix.rows)
+    {
+        if (!row.isActive())
+            continue;
+
+        const float contribution = srcVals.get(row.source) * row.depth;
+
+        if (row.target == SynthParam::ID::FilterCutoff)
+            adj.filterCutoff += contribution;
+        else if (row.target == SynthParam::ID::FilterResonance)
+            adj.filterResonance += contribution;
+        else if (row.target == SynthParam::ID::Osc1Pitch)
+            adj.osc1Pitch += contribution;
+        else if (row.target == SynthParam::ID::Osc2Pitch)
+            adj.osc2Pitch += contribution;
+        else if (row.target == SynthParam::ID::Osc2Detune)
+            adj.osc2Detune += contribution;
+        else if (row.target == SynthParam::ID::Osc2PWOffset)
+            adj.osc2PWOffset += contribution;
+        else if (row.target == SynthParam::ID::Osc1Vol)
+            adj.osc1Vol += contribution;
+        else if (row.target == SynthParam::ID::Osc2Vol)
+            adj.osc2Vol += contribution;
+        else if (row.target == SynthParam::ID::NoiseVol)
+            adj.noiseVol += contribution;
+        else if (row.target == SynthParam::ID::RingModVol)
+            adj.ringModVol += contribution;
+        else if (row.target == SynthParam::ID::NoiseColor)
+            adj.noiseColor += contribution;
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Matrix presets — THROWAWAY / for testing only
 // ---------------------------------------------------------------------------

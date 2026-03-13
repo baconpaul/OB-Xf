@@ -156,6 +156,13 @@ void MidiHandler::processMidiPerSample(juce::MidiBufferIterator *iter,
                 break;
             case 64:
             case 74:
+                if (mpeEnabled.load() && midiMsg->getChannel() != 1)
+                {
+                    synth.processMPETimbre(static_cast<int8_t>(midiMsg->getChannel() - 1),
+                                           midiMsg->getControllerValue() / 127.0f);
+                }
+                dontLearn = true;
+                break;
             case 120:
             case 123:
                 dontLearn = true;

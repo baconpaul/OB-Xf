@@ -149,6 +149,7 @@ class Voice
     int midiNote{60};
     int16_t channel{0};
     VoiceMatrixAdjustments matrixAdjustments{};
+    VoiceMatrixSourceValues matrixSourceValues{};
     float pitchBend{0.f};
     float mpeBend{0.f};
     bool sustainHold{false};
@@ -210,7 +211,8 @@ class Voice
                      (par.lfo2.cutoff * filterLFO2Mod * par.lfo2.amt1) + par.filter.cutoff +
                      slop.cutoff * par.slop.cutoff +
                      par.filter.envAmt * filterEnvDelayed.feedReturn(modEnv) - 45 +
-                     (par.filter.keytrack * (pitchBendScaled + oscs.par.pitch.notePlaying + 40)));
+                     (par.filter.keytrack * (pitchBendScaled + oscs.par.pitch.notePlaying + 40)) +
+                     matrixAdjustments.filterCutoff * VoiceMatrixRanges::filterCutoff);
 
         // limit max cutoff for numerical stability
         float cutoffcalc = juce::jmin(cutoffPitch + noisyCutoff, (sampleRate * 0.5f - 120.0f));
@@ -229,7 +231,8 @@ class Voice
                                  (par.osc.envPWBothOscs ? (par.osc.envPWAmt * pwenv) : 0);
         oscs.par.mod.osc2PWMod = (par.lfo1.osc2PW * lfo1In * par.lfo1.amt2) +
                                  (par.lfo2.osc2PW * lfo2In * par.lfo2.amt2) +
-                                 (par.osc.envPWAmt * pwenv) + par.osc.pwOsc2Offset;
+                                 (par.osc.envPWAmt * pwenv) + par.osc.pwOsc2Offset +
+                                 matrixAdjustments.osc2PWOffset * VoiceMatrixRanges::osc2PWOffset;
 
         // pitch modulation
         float pitchEnv = modEnv * (oscs.par.mod.envToPitchInvert ? -1 : 1);
@@ -238,14 +241,39 @@ class Voice
             (!par.extmod.pbOsc2Only ? pitchBendScaled : 0) +
             (par.lfo1.osc1Pitch * lfo1In * par.lfo1.amt1) +
             (par.lfo2.osc1Pitch * lfo2In * par.lfo2.amt1) +
-            (par.osc.envPitchBothOscs ? (par.osc.envPitchAmt * pitchEnv) : 0) + vibratoLFOIn;
+            (par.osc.envPitchBothOscs ? (par.osc.envPitchAmt * pitchEnv) : 0) + vibratoLFOIn +
+            matrixAdjustments.osc1Pitch * VoiceMatrixRanges::osc1Pitch;
         oscs.par.mod.osc2PitchMod = pitchBendScaled +
                                     (par.lfo1.osc2Pitch * lfo1In * par.lfo1.amt1) +
                                     (par.lfo2.osc2Pitch * lfo2In * par.lfo2.amt1) +
-                                    (par.osc.envPitchAmt * pitchEnv) + vibratoLFOIn;
+                                    (par.osc.envPitchAmt * pitchEnv) + vibratoLFOIn +
+                                    matrixAdjustments.osc2Pitch * VoiceMatrixRanges::osc2Pitch;
+
+        // apply matrix adjustments to oscillator mix and detune before processing;
+        // save and restore to avoid per-sample accumulation
+        const float savedOsc1 = oscs.par.mix.osc1;
+        const float savedOsc2 = oscs.par.mix.osc2;
+        const float savedNoise = oscs.par.mix.noise;
+        const float savedRingMod = oscs.par.mix.ringMod;
+        const float savedNoiseColor = oscs.par.mix.noiseColor;
+        const float savedDetune = oscs.par.osc.detune;
+
+        oscs.par.mix.osc1 = juce::jmax(0.f, oscs.par.mix.osc1 + matrixAdjustments.osc1Vol * VoiceMatrixRanges::osc1Vol);
+        oscs.par.mix.osc2 = juce::jmax(0.f, oscs.par.mix.osc2 + matrixAdjustments.osc2Vol * VoiceMatrixRanges::osc2Vol);
+        oscs.par.mix.noise = juce::jmax(0.f, oscs.par.mix.noise + matrixAdjustments.noiseVol * VoiceMatrixRanges::noiseVol);
+        oscs.par.mix.ringMod = juce::jmax(0.f, oscs.par.mix.ringMod + matrixAdjustments.ringModVol * VoiceMatrixRanges::ringModVol);
+        oscs.par.mix.noiseColor = juce::jlimit(0.f, 1.f, oscs.par.mix.noiseColor + matrixAdjustments.noiseColor * VoiceMatrixRanges::noiseColor);
+        oscs.par.osc.detune = oscs.par.osc.detune + matrixAdjustments.osc2Detune * VoiceMatrixRanges::osc2Detune; // NOTE: detune is log-scaled by SynthEngine; adjustment is additive in that space
 
         // process oscillator block
         float oscSample = oscs.ProcessSample() * (1 - par.slop.level * slop.level);
+
+        oscs.par.mix.osc1 = savedOsc1;
+        oscs.par.mix.osc2 = savedOsc2;
+        oscs.par.mix.noise = savedNoise;
+        oscs.par.mix.ringMod = savedRingMod;
+        oscs.par.mix.noiseColor = savedNoiseColor;
+        oscs.par.osc.detune = savedDetune;
 
         // process oscillator brightness
         oscSample = oscSample - tpt_lp_unwarped(state.oscBlock, oscSample, 12, sampleRateInv);
@@ -375,6 +403,7 @@ class Voice
         midiNote = note;
         channel = chan;
         matrixAdjustments.clear();
+        matrixSourceValues.clear();
 
         if (!gatedWithSustain || (par.extmod.envLegatoMode & 1))
         {
