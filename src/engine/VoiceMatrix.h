@@ -38,6 +38,42 @@
  * The matrix has numMatrixRows rows, each with a source, target, and depth.
  */
 
+/*
+ * HOW TO ADD A NEW MODULATION SOURCE
+ * ------------------------------------
+ * 1. MatrixSource enum      — add your entry (e.g. Aftertouch).
+ * 2. matrixSourceToString() — add a case returning a stable string literal.
+ * 3. matrixSourceFromString() — add the matching reverse case.
+ * 4. VoiceMatrixSourceValues — add a float field (e.g. aftertouch{0.f}).
+ * 5. VoiceMatrixSourceValues::get() — add a case returning the new field.
+ * 6. VoiceMatrixSourceValues::set() — add a case writing the new field.
+ * 7. Wire it up — call setMatrixSource() + recalculateMatrix() from wherever
+ *    the source value arrives:
+ *      - Per-voice at note start: Voice::NoteOn() sets the field after
+ *        matrixSourceValues.clear(); Motherboard calls recalculateMatrix().
+ *      - Per-voice at note end: Voice::NoteOff() sets the field;
+ *        Motherboard calls recalculateMatrix().
+ *      - Per-channel real-time: Motherboard::processMPE*() follows the
+ *        same pattern as processMPETimbre / processMPEChannelPressure.
+ * 8. MPEMatrixEditor (src/gui/MPEMatrix.h) — add the item to the source
+ *    combo box and update sourceToId() / idToSource().
+ *
+ * HOW TO ADD A NEW MODULATION TARGET
+ * ------------------------------------
+ * 1. VoiceMatrixAdjustments — add a float field (e.g. osc1PWOffset{0.f})
+ *    and clear it in clear().
+ * 2. VoiceMatrixRanges      — add a static constexpr float for the natural
+ *    scale: +/-1 source maps to +/- that many native units.
+ * 3. isValidMatrixTarget()  — add the SynthParam::ID string to the set.
+ * 4. recalculateMatrix()    — add an else-if branch that accumulates
+ *    contribution into the new field.
+ * 5. Voice::ProcessSample() — consume the adjustment at the right point
+ *    in the signal path, e.g.:
+ *      foo = bar + matrixAdjustments.osc1PWOffset * VoiceMatrixRanges::osc1PWOffset;
+ * 6. MPEMatrixEditor (src/gui/MPEMatrix.h) — add the item to the target
+ *    combo box and update targetToId() / idToTarget().
+ */
+
 // ---------------------------------------------------------------------------
 // Source enum — use string conversion for stable streaming (not int values)
 // ---------------------------------------------------------------------------
