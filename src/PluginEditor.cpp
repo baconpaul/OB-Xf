@@ -2633,11 +2633,8 @@ void ObxfAudioProcessorEditor::createMenu()
                     if (!w)
                         return;
                     auto ps = getMatrixPresets();
-                    auto &mb = *w->processor.getSynth().getMotherboard();
-                    mb.voiceMatrix.clear();
                     for (int r = 0; r < numMatrixRows; ++r)
-                        mb.voiceMatrix.rows[r] = ps[i].rows[r];
-                    w->processor.updateMatrix();
+                        w->processor.pushMatrixRowUpdate(r, ps[i].rows[r]);
                 });
         }
         mpeMenu.addSeparator();

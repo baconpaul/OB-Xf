@@ -369,6 +369,55 @@ inline void recalculateMatrix(const VoiceMatrix &matrix, const VoiceMatrixSource
 }
 
 // ---------------------------------------------------------------------------
+// Thread-safe UI→audio FIFO for matrix row updates
+// ---------------------------------------------------------------------------
+struct MatrixRowUpdate
+{
+    int index{-1};
+    MatrixRow row{};
+};
+
+/*
+ * MatrixUpdateFifo: single-producer (UI), single-consumer (audio) FIFO for
+ * pushing row edits from the message thread to processBlock.
+ */
+template <int Capacity> class MatrixUpdateFifo
+{
+  public:
+    MatrixUpdateFifo() : abstractFifo(Capacity) {}
+
+    bool push(int index, const MatrixRow &row)
+    {
+        if (abstractFifo.getFreeSpace() == 0)
+            return false;
+        auto scope = abstractFifo.write(1);
+        if (scope.blockSize1 > 0)
+            buffer[scope.startIndex1] = {index, row};
+        else if (scope.blockSize2 > 0)
+            buffer[scope.startIndex2] = {index, row};
+        return true;
+    }
+
+    bool hasElement() const { return abstractFifo.getNumReady() > 0; }
+
+    /* Call only after hasElement() returns true */
+    MatrixRowUpdate pop()
+    {
+        auto scope = abstractFifo.read(1);
+        if (scope.blockSize1 > 0)
+            return buffer[scope.startIndex1];
+        return buffer[scope.startIndex2];
+    }
+
+  private:
+    juce::AbstractFifo abstractFifo;
+    std::array<MatrixRowUpdate, Capacity> buffer{};
+
+    JUCE_DECLARE_NON_COPYABLE(MatrixUpdateFifo)
+    JUCE_DECLARE_NON_MOVEABLE(MatrixUpdateFifo)
+};
+
+// ---------------------------------------------------------------------------
 // Matrix presets — THROWAWAY / for testing only
 // ---------------------------------------------------------------------------
 struct MatrixPreset

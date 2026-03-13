@@ -90,6 +90,17 @@ void ObxfAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     paramCoordinator->getParameterUpdateHandler().updateParameters();
 
+    {
+        auto &vm = synth.getMotherboard()->voiceMatrix;
+        while (matrixFifo.hasElement())
+            [[unlikely]]
+            {
+                auto update = matrixFifo.pop();
+                if (update.index >= 0 && update.index < numMatrixRows)
+                    vm.rows[update.index] = update.row;
+            }
+    }
+
     int samplePos = 0;
     const int numSamples = buffer.getNumSamples();
     float *channelData1 = buffer.getWritePointer(0);
@@ -461,9 +472,9 @@ void ObxfAudioProcessor::setMpePitchBendRange(int range)
     synth.getMotherboard()->mpePitchBendRange = range;
 }
 
-void ObxfAudioProcessor::updateMatrix()
+void ObxfAudioProcessor::pushMatrixRowUpdate(int idx, const MatrixRow &row)
 {
-    // TODO: notify voices / trigger per-voice recalculation when matrix changes
+    matrixFifo.push(idx, row);
 }
 
 //==============================================================================
