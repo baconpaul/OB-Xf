@@ -122,6 +122,28 @@ struct VoiceMatrixAdjustments
     }
 };
 
+/*
+ * VoiceMatrixRanges: natural scale for each modulation target.
+ * +/-1 source value maps to +/- the range value in the target's native units.
+ * Keep in sync with VoiceMatrixAdjustments above and isValidMatrixTarget() below.
+ */
+struct VoiceMatrixRanges
+{
+    // Pitch targets: +/-1 = +/-48 semitones
+    static constexpr float filterCutoff{48.f};
+    static constexpr float osc1Pitch{48.f};
+    static constexpr float osc2Pitch{48.f};
+    // All other targets: +/-1 = +/-1 (full range)
+    static constexpr float filterResonance{1.f};
+    static constexpr float osc2Detune{1.f};
+    static constexpr float osc2PWOffset{1.f};
+    static constexpr float osc1Vol{1.f};
+    static constexpr float osc2Vol{1.f};
+    static constexpr float noiseVol{1.f};
+    static constexpr float ringModVol{1.f};
+    static constexpr float noiseColor{1.f};
+};
+
 // ---------------------------------------------------------------------------
 // Valid modulation targets — keep in sync with VoiceMatrixAdjustments above
 // ---------------------------------------------------------------------------
