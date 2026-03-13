@@ -394,7 +394,7 @@ inline std::vector<MatrixPreset> getMatrixPresets()
         MatrixPreset p;
         p.name = "Pressure to Pitch + Timbre to Cutoff";
         p.rows[0] = {MatrixSource::ChannelPressure, SynthParam::ID::Osc1Pitch, 0.3f};
-        p.rows[1] = {MatrixSource::ChannelPressure, SynthParam::ID::Osc2Pitch, 0.3f};
+        p.rows[1] = {MatrixSource::ChannelPressure, SynthParam::ID::Osc2Pitch, -0.3f};
         p.rows[2] = {MatrixSource::Timbre, SynthParam::ID::FilterCutoff, 0.7f};
         presets.push_back(p);
     }

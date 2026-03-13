@@ -159,6 +159,7 @@ class SynthEngine
 
     void processMPEPitch(int8_t channel, float val) { synth.processMPEPitch(channel, val); }
     void processMPETimbre(int8_t channel, float val) { synth.processMPETimbre(channel, val); }
+    void processMPEChannelPressure(int8_t channel, float val) { synth.processMPEChannelPressure(channel, val); }
 
     void processModWheel(float val) { modWheelSmoother.setStep(val); }
 

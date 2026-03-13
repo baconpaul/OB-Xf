@@ -140,6 +140,15 @@ void MidiHandler::processMidiPerSample(juce::MidiBufferIterator *iter,
                 synth.processPitchWheel(pitchVal);
             }
         }
+        if (midiMsg->isChannelPressure())
+        {
+            if (mpeEnabled.load() && midiMsg->getChannel() != 1)
+            {
+                synth.processMPEChannelPressure(static_cast<int8_t>(midiMsg->getChannel() - 1),
+                                                midiMsg->getChannelPressureValue() / 127.0f);
+            }
+        }
+
         if (midiMsg->isController())
         {
             bool dontLearn = false;
