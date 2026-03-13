@@ -404,6 +404,11 @@ class Voice
         channel = chan;
         matrixAdjustments.clear();
         matrixSourceValues.clear();
+        /* Velocity is known at note-on time; set it now so Motherboard can
+         * recalculateMatrix immediately after this call with a consistent state.
+         * Works correctly for the reuseVelocitySentinel path too, since
+         * velocity holds its preserved value by this point. */
+        setMatrixSource(matrixSourceValues, MatrixSource::Velocity, velocity);
 
         if (!gatedWithSustain || (par.extmod.envLegatoMode & 1))
         {
@@ -422,12 +427,16 @@ class Voice
         gatedWithSustain = false; // only when released am i sustain gated
     }
 
-    void NoteOff()
+    void NoteOff(float releaseVelocity)
     {
         OBLOG(voiceManager, "idx=" << voiceIndex << ": Note Off " << midiNote
                                    << " sound=" << sounding << " sustainHold=" << sustainHold
                                    << " gated=" << gated
                                    << " gatedWithSustain=" << gatedWithSustain)
+
+        /* Set release velocity source; leave other sources (bend, pressure, timbre) intact
+         * so they remain active through the release phase. */
+        setMatrixSource(matrixSourceValues, MatrixSource::ReleaseVelocity, releaseVelocity);
 
         if (!sustainHold)
         {
